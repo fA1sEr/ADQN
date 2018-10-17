@@ -26,6 +26,10 @@ class Network:
         self.flat = tf.contrib.layers.fully_connected(self.state, hidden_size, activation_fn=tf.nn.relu, normalizer_fn=batch_norm, normalizer_params=self.bn_params)
         #self.flat = tf.Print(self.flat, [self.flat], message='flat:', summarize=100)
 
+        self.flat2 = tf.contrib.layers.fully_connected(self.flat, hidden_size, activation_fn=tf.nn.relu, normalizer_fn=batch_norm, normalizer_params=self.bn_params)
+
+        self.fc2_out = tf.reshape(self.flat2, shape=[-1, hidden_size])
+
         self.cell = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size, state_is_tuple=True)
 
         self.fc_reshape = tf.reshape(self.flat, [self.batch_size, self.train_length, hidden_size])
@@ -39,7 +43,7 @@ class Network:
         self.rnn = tf.reshape(self.rnn, shape=[-1, hidden_size])
         #self.rnn = tf.Print(self.rnn, [self.rnn], message='rnn:', summarize=100)
 
-        self.q = tf.contrib.layers.fully_connected(self.rnn, action_count, activation_fn=tf.nn.relu, normalizer_fn=batch_norm, normalizer_params=self.bn_params)
+        self.q = tf.contrib.layers.fully_connected(self.fc2_out, action_count, activation_fn=tf.nn.relu, normalizer_fn=batch_norm, normalizer_params=self.bn_params)
         #self.q = tf.Print(self.q, [self.q], message='q:', summarize=100)
 
         self.best_a = tf.argmax(self.q, 1)
