@@ -49,6 +49,7 @@ class parr95:
                     p_trans = float(items[1].strip())
                     self.T[action][state][new_state] = p_trans
             if line[0]=='O':
+                items = line.split(':')
                 state = int(items[2].strip())
                 items = items[3].strip().split()
                 observation = int(items[0].strip())

@@ -8,7 +8,7 @@ import tensorflow as tf
 from tqdm import trange
 from vizdoom import *
 from Agent import Agent
-from GameSimulator.hallway_GameSimulator import GameSimulator
+from GameSimulator.parr95_GameSimulator import GameSimulator
 
 # to choose gpu
 os.environ["CUDA_VISIBLE_DEVICES"] = "4"
@@ -17,8 +17,8 @@ FRAME_REPEAT = 1 # How many frames 1 action should be repeated
 UPDATE_FREQUENCY = 4
 COPY_FREQUENCY = 1000
 
-STATE_NUM = 21
-ACTION_LENGTH = 5 # change two place [1]
+STATE_NUM = 6
+ACTION_LENGTH = 3 # change two place [1]
 STATE_LENGTH = STATE_NUM + ACTION_LENGTH
 BATCH_SIZE = 32 # Batch size for experience replay
 LEARNING_RATE = 0.001 # Learning rate of model
@@ -30,7 +30,7 @@ EPSILON_MAX = 1 # Max exploration rate
 EPSILON_MIN = 0.1 # Min exploration rate
 EPSILON_DECAY_STEPS = 3e5 # How many steps to decay from max exploration to min exploration
 
-RANDOM_WANDER_STEPS = 200000 # How many steps to be sampled randomly before training starts
+RANDOM_WANDER_STEPS = 50000 # How many steps to be sampled randomly before training starts
 
 TRACE_LENGTH = 8 # How many traces are used for network updates
 HIDDEN_SIZE = 768 # Size of the third convolutional layer when flattened
