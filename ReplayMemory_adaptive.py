@@ -75,8 +75,11 @@ class ReplayMemory:
 
     def check(self):
         self.delta_ = self.calculate()
-#        if self.delta_ > self.delta or self.end - self.begin <= self.k:
-        if self.delta_ > self.delta or self.end - self.begin <= 50000:
+        if self.end - self.begin <= 20000:
+            return False
+        elif self.end - self.begin >= 200000:
+            return True
+        elif self.delta_ > self.delta:
             return False
         else:
             return True
