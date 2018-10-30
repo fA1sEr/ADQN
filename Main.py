@@ -64,9 +64,9 @@ def updateTarget(op_holder,sess):
     for op in op_holder:
         sess.run(op)
 
-def saveScore(score, suc_rate, avg_step):
+def saveScore(metric):
     my_file = open(reward_savefile, 'a')  # Name and path of the reward text file
-    my_file.write("avg reward:%s(%s) suc rate:%s avg step:%s\n" % (score.mean(), score.std(), suc_rate, avg_step))
+    my_file.write("%s\n" % (metric))
     my_file.close()
 
 ###########################################
@@ -101,6 +101,13 @@ else:
     SESSION.run(init)
 
 ##########################################
+# calculate gamma^i
+
+gamma = [1]
+for i in range(251):
+    gamma += [gamma[-1]*GAMMA]
+
+##########################################
 
 if not SKIP_LEARNING:
     time_start = time()
@@ -128,22 +135,24 @@ if not SKIP_LEARNING:
             agent.reset_cell_state()
             state = game.get_state()
 
-    max_avgR = -10000.0
+    min_metric = 10000.0
 
     for epoch in range(EPOCHS):
         print("\n\nEpoch %d\n-------" % (epoch + 1))
         print("Training...")
 
         learning_step = 0
-        success_num = 0
+        gamma_r_sum = 0.0
         for games_cnt in range(GAMES_PER_EPOCH):
             game.reset()
             agent.reset_cell_state()
             state = game.get_state()
+            now_game_step = 0
             while True:
                 learning_step += 1
                 action = agent.act(state)
                 img_state, reward, done = game.make_action(action)
+                now_game_step += 1
                 if done!=1:
                     state_new = img_state
                 else:
@@ -159,17 +168,16 @@ if not SKIP_LEARNING:
                 if done!=0:
                     print("Epoch %d Train Game %d get %.1f" % (epoch, games_cnt, game.get_total_reward()))
                     if game.get_total_reward()>0:
-                        success_num += 1
+                        gamma_r_sum += gamma[now_game_step-1]
                     break
-            if SAVE_MODEL and games_cnt % 50 == 0:
+            if SAVE_MODEL and games_cnt % 100 == 0:
                 saver.save(SESSION, model_savefile)
                 #print("Saving the network weigths to:", model_savefile)
 
-        print('train success rate:',success_num/GAMES_PER_EPOCH)
+        print('train avg matric:',gamma_r_sum/GAMES_PER_EPOCH)
         print('\nTesting...')
 
-        success_num = 0
-        success_total_step = 0
+        gamma_r_sum = 0
         test_scores = []
         if epoch==EPOCHS-1:
             test_game_num = FINAL_TO_TEST
@@ -184,26 +192,16 @@ if not SKIP_LEARNING:
                 action = agent.act(state, train=False)
                 game.make_action(action, train=False)
                 total_step += 1
-            test_scores.append(game.get_total_reward())
             if game.get_total_reward()>0:
-                success_num += 1
-                success_total_step += total_step
+                gamma_r_sum += gamma[total_step-1]
 
-        test_scores = np.array(test_scores)
-        print('test success rate:',success_num/test_game_num)
-        print("Results: mean: %.1f±%.1f," % (test_scores.mean(), test_scores.std()),
-              "min: %.1f" % test_scores.min(), "max: %.1f" % test_scores.max())
+        print('test metric:',gamma_r_sum/test_game_num)
 
         if SAVE_MODEL:
-            if success_num==0:
-                avg_step = 0
-            else:
-                avg_step = success_total_step/success_num
-            saveScore(test_scores, success_num/test_game_num, avg_step)
+            saveScore(gamma_r_sum/test_game_num)
             saver.save(SESSION, model_savefile)
-            print("Saving the network weigths to:", model_savefile)
-            if test_scores.mean() > max_avgR:
-                max_avgR = test_scores.mean()
+            if gamma_r_sum/test_game_num < min_metric:
+                min_metric = gamma_r_sum/test_game_num
                 saver.save(SESSION, max_model_savefile)
 
         print("Total ellapsed time: %.2f minutes" % ((time() - time_start) / 60.0))
