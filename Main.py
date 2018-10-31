@@ -135,7 +135,7 @@ if not SKIP_LEARNING:
             agent.reset_cell_state()
             state = game.get_state()
 
-    min_metric = 10000.0
+    max_metric = -10000.0
 
     for epoch in range(EPOCHS):
         print("\n\nEpoch %d\n-------" % (epoch + 1))
@@ -178,7 +178,6 @@ if not SKIP_LEARNING:
         print('\nTesting...')
 
         gamma_r_sum = 0
-        test_scores = []
         if epoch==EPOCHS-1:
             test_game_num = FINAL_TO_TEST
         else:
@@ -200,8 +199,8 @@ if not SKIP_LEARNING:
         if SAVE_MODEL:
             saveScore(gamma_r_sum/test_game_num)
             saver.save(SESSION, model_savefile)
-            if gamma_r_sum/test_game_num < min_metric:
-                min_metric = gamma_r_sum/test_game_num
+            if gamma_r_sum/test_game_num > max_metric:
+                max_metric = gamma_r_sum/test_game_num
                 saver.save(SESSION, max_model_savefile)
 
         print("Total ellapsed time: %.2f minutes" % ((time() - time_start) / 60.0))
